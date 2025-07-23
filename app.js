@@ -2,7 +2,6 @@
 const express = require('express');
 const axios = require('axios');
 
-
 // Express app setup
 const app = express();
 app.use(express.json());
@@ -51,13 +50,13 @@ app.post('/', async (req, res) => {
   const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!entry) return res.sendStatus(200);
 
-  const msgBody = entry.text?.body?.trim().toLowerCase();
+  const msgBody = entry.text?.body?.trim().toUpperCase();
   const from = entry.from;
 
   console.log(`[INCOMING] ${from}: ${msgBody}`);
 
   // Flow logic
-  if (["hi", "hello", "hey"].includes(msgBody)) {
+  if (["HI", "HELLO", "HEY"].includes(msgBody)) {
     await sendMessage(from,
       "Welcome to King's Hospital. Please select a service:\n" +
       "1. Book a Doctor\n2. Home Lab Request\n3. Ambulance Service\n4. Other Hospital Services"
@@ -68,18 +67,18 @@ app.post('/', async (req, res) => {
     );
   } else if (msgBody === "2") {
     await sendMessage(from, "Contact the following number to place a homelab request: 9876543212");
-  } else if (msgBody === "3"){
-    await sendMessage(from, "Contact the following number to book to request ambulance service: 9876543515");
-  else if (["4"].includes(msgBody)) {
+  } else if (msgBody === "3") {
+    await sendMessage(from, "Contact the following number to request ambulance service: 9876543515");
+  } else if (msgBody === "4") {
     await sendMessage(from,
       "Please select from the following:\n" +
-      "A. Wellness Center\nB. Radiology\nC. Surgical Care\nC. Physiotherapy Unit\nE. Laboratory Services\n" +
+      "A. Wellness Center\nB. Radiology\nC. Surgical Care\nD. Physiotherapy Unit\nE. Laboratory Services\n" +
       "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
     );
   } else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
     await sendMessage(from, "Contact this number for customer support: 044-121345");
   } else {
-    await sendMessage(from, "Thank you! ");
+    await sendMessage(from, "Thank you! Your response has been recorded.");
   }
 
   res.sendStatus(200);
