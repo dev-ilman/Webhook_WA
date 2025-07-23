@@ -59,26 +59,27 @@ app.post('/', async (req, res) => {
   // Flow logic
   if (["hi", "hello", "hey"].includes(msgBody)) {
     await sendMessage(from,
-      "Welcome to XYZ Hospital. Please select a service:\n" +
+      "Welcome to King's Hospital. Please select a service:\n" +
       "1. Book a Doctor\n2. Home Lab Request\n3. Ambulance Service\n4. Other Hospital Services"
     );
   } else if (msgBody === "1") {
     await sendMessage(from,
-      "Choose your required department:\n" +
-      "1. Dental Care\n2. Renal Care\n3. Cardiac Care\n4. Eye Care\n5. Pulmonology Unit\n6. Liver Care"
+      "Contact the following number to book an appointment: 94117743743"
     );
-  } else if (msgBody === "2" || msgBody === "3") {
-    await sendMessage(from, "Please share your address for the request.");
-  } else if (["4"].includes(msgBody)) {
+  } else if (msgBody === "2") {
+    await sendMessage(from, "Contact the following number to place a homelab request: 9876543212");
+  } else if (msgBody === "3"){
+    await sendMessage(from, "Contact the following number to book to request ambulance service: 9876543515");
+  else if (["4"].includes(msgBody)) {
     await sendMessage(from,
       "Please select from the following:\n" +
-      "1. Wellness Center\n2. Radiology\n3. Surgical Care\n4. Physiotherapy Unit\n5. Laboratory Services\n" +
-      "6. Endoscopy Unit\n7. Wound Clinic\n8. Gynecology & Obstetrics\n9. 24 Hours Pharmacy"
+      "A. Wellness Center\nB. Radiology\nC. Surgical Care\nC. Physiotherapy Unit\nE. Laboratory Services\n" +
+      "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
     );
-  } else if (["1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(msgBody)) {
-    await sendMessage(from, "Feature under development 🚧");
+  } else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
+    await sendMessage(from, "Contact this number for customer support: 044-121345");
   } else {
-    await sendMessage(from, "Thank you! Your request is under development 🚧");
+    await sendMessage(from, "Thank you! ");
   }
 
   res.sendStatus(200);
