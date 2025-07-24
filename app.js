@@ -78,7 +78,7 @@ app.post('/', async (req, res) => {
   } else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
     await sendMessage(from, "Contact this number for customer support: 044-121345");
   } else {
-    await sendMessage(from, "Thank you! Your response has been recorded.");
+    await sendMessage(from, "Please choose from the given options");
   }
 
   res.sendStatus(200);
