@@ -75,7 +75,18 @@ app.post('/', async (req, res) => {
       "A. Wellness Center\nB. Radiology\nC. Surgical Care\nD. Physiotherapy Unit\nE. Laboratory Services\n" +
       "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
     );
-  } else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
+  } else if (msgBody === "a")  {
+    await sendMessage(from, "Contact this number for Wellness Center: 044-121345");
+  } else if (msgBody === "b")  {
+    await sendMessage(from, "Contact this number for Radiology : 044-121346");
+  } else if (msgBody === "c")  {
+    await sendMessage(from, "Contact this number for Surgical Care: 044-121347");
+  } else if (msgBody === "d")  {
+    await sendMessage(from, "Contact this number for Physiotheraphy Unit: 044-121348");
+  }   
+  
+  
+  else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
     await sendMessage(from, "Contact this number for customer support: 044-121345");
   } else {
     await sendMessage(from, "Please choose from the given options");
