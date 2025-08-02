@@ -1,5 +1,4 @@
 // Import Express and Axios
-
 const express = require('express');
 const axios = require('axios');
 const FormData = require('form-data');
@@ -15,21 +14,13 @@ const verifyToken = process.env.VERIFY_TOKEN;
 const whatsappToken = process.env.WHATSAPP_TOKEN;
 const phoneNumberId = process.env.PHONE_NUMBER_ID;
 
-// multer
+// multer (not used here, but setup if needed later)
 const multer = require('multer');
-
-// Set storage location and filename for uploaded files
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './pdfs');  // folder to save uploaded files - create this folder in your project
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);  // save file with original name (you can customize)
-  }
+  destination: (req, file, cb) => cb(null, './pdfs'),
+  filename: (req, file, cb) => cb(null, file.originalname),
 });
-
-const upload = multer({ storage: storage });
-
+const upload = multer({ storage });
 
 // Util: send message to WhatsApp
 const sendMessage = async (to, message) => {
@@ -53,32 +44,11 @@ const sendMessage = async (to, message) => {
   }
 };
 
-// Webhook verification
-app.get('/', (req, res) => {
-  const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query;
-  if (mode === 'subscribe' && token === verifyToken) {
-    console.log('WEBHOOK VERIFIED');
-    res.status(200).send(challenge);
-  } else {
-    res.status(403).end();
-  }
-});
-
-// Webhook listener
-app.post('/', async (req, res) => {
-  const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-  if (!entry) return res.sendStatus(200);
-
-  const msgBody = entry.text?.body?.trim().toUpperCase();
-  const from = entry.from;
-
-  console.log(`[INCOMING] ${from}: ${msgBody}`);
-  
-// media upload
+// Upload media (PDF) to WhatsApp
 const uploadMedia = async (filePath) => {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
-  form.append('type', 'application/pdf');  // MIME type of PDF
+  form.append('type', 'application/pdf');
 
   try {
     const response = await axios.post(
@@ -91,13 +61,14 @@ const uploadMedia = async (filePath) => {
         },
       }
     );
-    return response.data.id;  // This is the media ID you will send in message
+    return response.data.id;
   } catch (error) {
     console.error('Error uploading media:', error.response?.data || error.message);
     throw error;
   }
 };
-// media to message
+
+// Send document by media ID
 const sendDocumentById = async (to, mediaId, filename) => {
   try {
     await axios.post(
@@ -123,56 +94,67 @@ const sendDocumentById = async (to, mediaId, filename) => {
   }
 };
 
-
-  // Flow logic
-  if (["HI", "HELLO", "HEY"].includes(msgBody)) {
-    await sendMessage(from,
-      "Welcome to King's Hospital. Please select a service:\n" +
-      "1. Book a Doctor\n2. Home Lab Request\n3. Ambulance Service\n4. Other Hospital Services"
-    );
-  } else if (msgBody === "1") {
-    await sendMessage(from,
-      "Contact the following number to book an appointment: 94117743743"
-    );
-  } else if (msgBody === "2") {
-    await sendMessage(from, "Contact the following number to place a homelab request: 9876543212");
-  } else if (msgBody === "3") {
-    await sendMessage(from, "Contact the following number to request ambulance service: 9876543515");
-  } else if (msgBody === "4") {
-    await sendMessage(from,
-      "Please select from the following:\n" +
-      "A. Wellness Center\nB. Radiology\nC. Surgical Care\nD. Physiotherapy Unit\nE. Laboratory Services\n" +
-      "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
-    );
-    try {
-      // Path to your local PDF file
-      const mediaId = await uploadMedia('comics.pdf');
-      await sendDocumentById(from, mediaId, './comics.pdf');
-    } catch (err) {
-      console.error('Error sending PDF:', err.message);
-    }
+// Webhook verification
+app.get('/', (req, res) => {
+  const { 'hub.mode': mode, 'hub.verify_token': token, 'hub.challenge': challenge } = req.query;
+  if (mode === 'subscribe' && token === verifyToken) {
+    console.log('WEBHOOK VERIFIED');
+    res.status(200).send(challenge);
   } else {
-    await sendMessage(from, 
-                      "PDF could not be uploaded.");
+    res.status(403).end();
   }
-  } else if (msgBody === "A")  {
-    await sendMessage(from, "Contact this number for Wellness Center: 044-121345");
-  } else if (msgBody === "B")  {
-    await sendMessage(from, "Contact this number for Radiology : 044-121346");
-  } else if (msgBody === "C")  {
-    await sendMessage(from, "Contact this number for Surgical Care: 044-121347");
-  } else if (msgBody === "D")  {
-    await sendMessage(from, "Contact this number for Physiotheraphy Unit: 044-121348");
-  } else if (msgBody === "I")  {
-    await sendMessage(from, "Contact this number for 24 HOURS Pharmacy: 044-121349");
-  }   
-     
-  
-  
-  else if (["A", "B", "C", "D", "E", "F", "G", "H", "I"].includes(msgBody)) {
-    await sendMessage(from, "Contact this number for customer support: 044-121345");
-  } else {
-    await sendMessage(from, "Please choose from the given options");
+});
+
+// Webhook listener
+app.post('/', async (req, res) => {
+  const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!entry) return res.sendStatus(200);
+
+  const msgBody = entry.text?.body?.trim().toUpperCase();
+  const from = entry.from;
+
+  console.log(`[INCOMING] ${from}: ${msgBody}`);
+
+  try {
+    if (["HI", "HELLO", "HEY"].includes(msgBody)) {
+      await sendMessage(
+        from,
+        "Welcome to King's Hospital. Please select a service:\n1. Book a Doctor\n2. Home Lab Request\n3. Ambulance Service\n4. Other Hospital Services"
+      );
+    } else if (msgBody === "1") {
+      await sendMessage(from, "Contact the following number to book an appointment: 94117743743");
+    } else if (msgBody === "2") {
+      await sendMessage(from, "Contact the following number to place a homelab request: 9876543212");
+    } else if (msgBody === "3") {
+      await sendMessage(from, "Contact the following number to request ambulance service: 9876543515");
+    } else if (msgBody === "4") {
+      await sendMessage(
+        from,
+        "Please select from the following:\n" +
+          "A. Wellness Center\nB. Radiology\nC. Surgical Care\nD. Physiotherapy Unit\nE. Laboratory Services\n" +
+          "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
+      );
+    } else if (msgBody === "PDF") {
+      const mediaId = await uploadMedia('comics.pdf');
+      await sendDocumentById(from, mediaId, 'comics.pdf');
+    } else if (msgBody === "A") {
+      await sendMessage(from, "Contact this number for Wellness Center: 044-121345");
+    } else if (msgBody === "B") {
+      await sendMessage(from, "Contact this number for Radiology : 044-121346");
+    } else if (msgBody === "C") {
+      await sendMessage(from, "Contact this number for Surgical Care: 044-121347");
+    } else if (msgBody === "D") {
+      await sendMessage(from, "Contact this number for Physiotherapy Unit: 044-121348");
+    } else if (msgBody === "I") {
+      await sendMessage(from, "Contact this number for 24 HOURS Pharmacy: 044-121349");
+    } else if (["E", "F", "G", "H"].includes(msgBody)) {
+      await sendMessage(from, "Contact this number for customer support: 044-121345");
+    } else {
+      await sendMessage(from, "Please choose from the given options");
+    }
+  } catch (err) {
+    console.error('Error handling message:', err);
+    return res.sendStatus(500);
   }
 
   res.sendStatus(200);
