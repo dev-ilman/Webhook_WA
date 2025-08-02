@@ -1,6 +1,9 @@
 // Import Express and Axios
+
 const express = require('express');
 const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
 
 // Express app setup
 const app = express();
@@ -11,6 +14,22 @@ const port = process.env.PORT || 3000;
 const verifyToken = process.env.VERIFY_TOKEN;
 const whatsappToken = process.env.WHATSAPP_TOKEN;
 const phoneNumberId = process.env.PHONE_NUMBER_ID;
+
+// multer
+const multer = require('multer');
+
+// Set storage location and filename for uploaded files
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './pdfs');  // folder to save uploaded files - create this folder in your project
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);  // save file with original name (you can customize)
+  }
+});
+
+const upload = multer({ storage: storage });
+
 
 // Util: send message to WhatsApp
 const sendMessage = async (to, message) => {
@@ -54,6 +73,56 @@ app.post('/', async (req, res) => {
   const from = entry.from;
 
   console.log(`[INCOMING] ${from}: ${msgBody}`);
+  
+// media upload
+const uploadMedia = async (filePath) => {
+  const form = new FormData();
+  form.append('file', fs.createReadStream(filePath));
+  form.append('type', 'application/pdf');  // MIME type of PDF
+
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/media`,
+      form,
+      {
+        headers: {
+          Authorization: `Bearer ${whatsappToken}`,
+          ...form.getHeaders(),
+        },
+      }
+    );
+    return response.data.id;  // This is the media ID you will send in message
+  } catch (error) {
+    console.error('Error uploading media:', error.response?.data || error.message);
+    throw error;
+  }
+};
+// media to message
+const sendDocumentById = async (to, mediaId, filename) => {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        to,
+        type: 'document',
+        document: {
+          id: mediaId,
+          filename: filename,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${whatsappToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    console.error('Failed to send document:', error.response?.data || error.message);
+  }
+};
+
 
   // Flow logic
   if (["HI", "HELLO", "HEY"].includes(msgBody)) {
@@ -75,6 +144,17 @@ app.post('/', async (req, res) => {
       "A. Wellness Center\nB. Radiology\nC. Surgical Care\nD. Physiotherapy Unit\nE. Laboratory Services\n" +
       "F. Endoscopy Unit\nG. Wound Clinic\nH. Gynecology & Obstetrics\nI. 24 Hours Pharmacy"
     );
+    try {
+      // Path to your local PDF file
+      const mediaId = await uploadMedia('comics.pdf');
+      await sendDocumentById(from, mediaId, './comics.pdf');
+    } catch (err) {
+      console.error('Error sending PDF:', err.message);
+    }
+  } else {
+    await sendMessage(from, 
+                      "PDF could not be uploaded.");
+  }
   } else if (msgBody === "A")  {
     await sendMessage(from, "Contact this number for Wellness Center: 044-121345");
   } else if (msgBody === "B")  {
