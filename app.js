@@ -14,13 +14,6 @@ const verifyToken = process.env.VERIFY_TOKEN;
 const whatsappToken = process.env.WHATSAPP_TOKEN;
 const phoneNumberId = process.env.PHONE_NUMBER_ID;
 
-// multer (not used here, but setup if needed later)
-const multer = require('multer');
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, './pdfs'),
-  filename: (req, file, cb) => cb(null, file.originalname),
-});
-const upload = multer({ storage });
 
 // Util: send message to WhatsApp
 const sendMessage = async (to, message) => {
