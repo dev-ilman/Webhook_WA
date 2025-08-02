@@ -42,6 +42,7 @@ const uploadMedia = async (filePath) => {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
   form.append('type', 'application/pdf');
+  form.append('messaging_product', 'whatsapp'); 
 
   try {
     const response = await axios.post(
